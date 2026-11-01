@@ -1,0 +1,31 @@
+{
+  "name": "rift-ops-opgg",
+  "version": "12.2.0",
+  "private": true,
+  "type": "module",
+  "description": "RIFT/OPS assisted-autopilot competitive operations platform with decision center, workflow automation, staff access management, OP.GG scouting and role-aware balancing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node --check server.js && node --check public/app.js && node --check series.js && node --check public/series-ui.js && node --check storage.js && node --check scripts/setup-auth.js",
+    "auth:setup": "node scripts/setup-auth.js",
+    "preflight": "node scripts/preflight.js",
+    "security:audit": "node scripts/permission-audit.js",
+    "release:check": "npm run check && npm run preflight && npm run security:audit && npm test",
+    "test": "node --test scripts/series.test.js",
+    "build": "npm run check",
+    "db:import": "node scripts/import-data.js",
+    "test:neon": "node --test scripts/neon-e2e.test.js"
+  },
+  "dependencies": {
+    "@neon/config": "^1.10.0",
+    "@neon/env": "^1.6.8",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.23.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

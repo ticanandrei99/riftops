@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: riftops
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: NODE_VERSION
+        value: "24"
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
