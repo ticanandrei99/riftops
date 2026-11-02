@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090d16">
+  <title>RIFT/OPS — Competitive Operations</title>
+  <link rel="preconnect" href="https://ddragon.leagueoflegends.com">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="RIFT/OPS home">
+        <span class="brand-mark">R</span><span><b>RIFT<span class="accent">/</span>OPS</b><small>COMPETITIVE OPERATIONS</small></span>
+      </a>
+      <div class="sidebar-label">RIFT/OPS</div>
+      <nav id="nav">
+        <button class="nav-item staff-only" data-tab="hub" hidden><span>◉</span> Centru Operațional <kbd>00</kbd></button>
+        <button class="nav-item staff-only" data-tab="series" hidden><span>▤</span> Match Series <kbd>BO</kbd></button>
+        <button class="nav-item" data-tab="teams"><span>⚔</span> Draft Echipe <kbd>01</kbd></button>
+        <button class="nav-item" data-tab="arena"><span>◈</span> 1v1 Arena <kbd>02</kbd></button>
+        <button class="nav-item" data-tab="bracket"><span>⌘</span> Turneu <kbd>03</kbd></button>
+        <button class="nav-item" data-tab="profiles"><span>◎</span> Profil Jucător <kbd>04</kbd></button>
+        <button class="nav-item staff-only" data-tab="admin" hidden><span>⚙</span> Administrare <kbd>05</kbd></button>
+        <button class="nav-item tech-only" data-tab="tech" hidden><span>⌁</span> Tehnician <kbd>DEV</kbd></button>
+        <button class="nav-item" data-tab="community"><span>◆</span> Custom Night <kbd>06</kbd></button>
+        <button class="nav-item" data-tab="history"><span>◷</span> Istoric Meciuri <kbd>07</kbd></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="live-dot"></div><span>LOCAL CONTROL ROOM</span>
+        <div class="version">BUILD 12.1.0 <span>● ONLINE</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">RIFT/OPS / COMPETITIVE OPERATIONS</div><h1 id="page-title">Team Draft <span class="muted">/ 5v5</span></h1></div>
+        <div class="top-actions"><button class="btn btn-ghost btn-sm" id="patch-notes-open">ACTUALIZĂRI</button><span class="pill"><i class="live-dot"></i> STREAM READY</span><span class="access-badge" id="access-badge">👤 VISITOR</span><button class="btn btn-ghost btn-sm" id="access-login">AUTENTIFICARE</button><button class="btn btn-ghost btn-sm" id="access-logout" hidden>IEȘIRE</button></div>
+      </header>
+
+
+      <section class="view" id="tab-series">
+  <div class="page-intro"><div class="eyebrow">MATCH DAY / SERIES CONTROL</div><h2>Match <span class="accent">Series</span></h2><p>BO1, BO3 și BO5 cu rezultate confirmate de staff. Scorul se salvează pe server.</p></div>
+  <article class="panel"><div class="panel-head"><h3>Serie nouă</h3><button class="btn btn-secondary" id="series-import">ECHIPE DIN DRAFT</button></div>
+  <div class="series-form"><label>BLUE TEAM<input id="series-blue" maxlength="64" placeholder="Blue team"></label><label>RED TEAM<input id="series-red" maxlength="64" placeholder="Red team"></label><label>FORMAT<select id="series-format"><option value="1">BO1</option><option value="3" selected>BO3</option><option value="5">BO5</option></select></label></div>
+  <button class="btn btn-primary" id="series-create">CREEAZĂ SERIA</button><p id="series-note" class="save-note" role="status"></p></article>
+  <article class="panel"><div class="panel-head"><h3>Serii salvate</h3><div class="admin-actions"><button class="btn btn-secondary" id="series-export">EXPORT CSV</button><button class="btn btn-ghost" id="series-refresh">REFRESH</button></div></div><div id="series-list"></div></article>
+</section>
+<section class="view staff-only" id="tab-hub" hidden>
+        <div class="hero-strip ops-hero"><div><div class="eyebrow">RIFT/OPS / CENTRU OPERAȚIONAL</div><h2>Control <span class="accent">central.</span></h2><p>Starea serii, meciul live, următorul pas și acțiunile importante într-un singur loc.</p></div><div class="hero-symbol">◉</div></div>
+        <div class="ops-command" id="ops-command">
+          <button class="ops-stat" data-jump="teams"><span>DRAFT</span><b id="ops-draft-stat">—</b><small>echipe pregătite</small></button>
+          <button class="ops-stat" data-jump="community"><span>READY CHECK</span><b id="ops-ready-stat">0/0</b><small>jucători gata</small></button>
+          <button class="ops-stat" data-jump="hub"><span>LIVE</span><b id="ops-live-stat">OFF</b><small id="ops-live-detail">niciun meci</small></button>
+          <button class="ops-stat" data-jump="bracket"><span>TURNEU</span><b id="ops-bracket-stat">—</b><small>bracket activ</small></button>
+          <div class="ops-next"><span>URMĂTORUL PAS</span><b id="ops-next-action">Pregătește draftul</b><button class="btn btn-primary btn-sm" id="ops-next-btn">DESCHIDE</button></div>
+        </div>
+        <div class="ops-recovery staff-only">
+          <div><span class="section-kicker">V12 / RECOVERY</span><b>Stare operațională protejată</b><small id="workflow-sync-state">Se sincronizează automat după modificări.</small></div>
+          <div class="ops-recovery-actions"><button class="btn btn-secondary btn-sm" id="workflow-snapshot">SALVEAZĂ SNAPSHOT</button><button class="btn btn-ghost btn-sm" id="workflow-snapshots-open">RECUPERARE</button></div>
+        </div>
+        <div class="autopilot-grid">
+          <article class="panel autopilot-panel"><div class="panel-head"><div><span class="section-kicker">V12 / AUTOPILOT ASISTAT</span><h3>Automatizare operațională</h3></div><span class="status-chip" id="autopilot-mode">ASSISTED</span></div><p class="subtle">RIFT/OPS execută munca repetitivă și lasă lineup-ul, rezultatele, rolurile și acțiunile sensibile la decizia staff-ului.</p><div class="automation-chips" id="automation-chips"></div><div class="admin-actions"><button class="btn btn-primary btn-sm" id="autopilot-run">RULEAZĂ AUTOPILOT</button><button class="btn btn-ghost btn-sm" id="automation-settings-open">SETĂRI</button></div><p class="save-note" id="autopilot-note"></p></article>
+          <article class="panel"><div class="panel-head"><div><span class="section-kicker">DECISION CENTER</span><h3>Necesită decizia voastră</h3></div><span class="count-chip" id="decision-count">0</span></div><div id="decision-center" class="decision-list"><div class="subtle">Se analizează starea operațională…</div></div></article>
+        </div>
+        <article class="panel automation-feed-panel"><div class="panel-head"><div><span class="section-kicker">AUTOMATION FEED</span><h3>Ce a făcut RIFT/OPS</h3></div><button class="btn btn-ghost btn-sm" id="automation-refresh">REFRESH</button></div><div id="automation-feed" class="automation-feed"><div class="subtle">Nicio automatizare încă.</div></div></article>
+        <div class="hub-grid">
+          <article class="panel hub-live"><div class="panel-head"><div><span class="section-kicker">ON AIR</span><h3>Live Match Control</h3></div><span class="status-chip" id="live-status">NO LIVE MATCH</span></div><div id="hub-live-content" class="empty-state mini"><b>No match on air</b><p>Generează Draft-ul și trimite un meci către LIVE.</p></div></article>
+          <article class="panel"><div class="panel-head"><div><span class="section-kicker">STREAM PRIORITY</span><h3>Featured player</h3></div><span class="streamer-badge">★ STREAMER</span></div><label>RIOT ID / NAME MATCH</label><input id="featured-player" value="Lobring" placeholder="Lobring"><p class="subtle">Meciul lui este urcat primul în queue, echipa lui este afișată pe BLUE SIDE când este posibil (doar schimbare de side, fără modificarea balance-ului) și primește spotlight în broadcast.</p><button class="btn btn-secondary full" id="save-featured">SAVE STREAM PRIORITY</button></article>
+        </div>
+        <article class="panel"><div class="panel-head"><div><span class="section-kicker">RUN OF SHOW</span><h3>Match Queue</h3></div><span class="count-chip" id="queue-count">0 MATCHES</span></div><div id="hub-queue" class="empty-state mini"><b>Queue empty</b><p>Draft-urile generate vor apărea aici.</p></div></article>
+        <article class="panel overlay-panel"><div><span class="section-kicker">OBS BROWSER SOURCES</span><h3>Broadcast overlays</h3><p class="subtle">Adaugă URL-urile de mai jos ca Browser Source în OBS. Overlay-ul citește starea LIVE de pe server.</p></div><div class="overlay-links"><code id="overlay-live-url">/overlay.html?view=live</code><code>/overlay.html?view=result</code></div></article>
+      </section>
+
+      <section class="view" id="tab-teams">
+        <div class="hero-strip"><div><div class="eyebrow">MATCH CONFIGURATION</div><h2>Build your <span class="accent">lineup.</span></h2><p>Generează automat oricâte echipe permite roster-ul, în meciuri 5v5 echilibrate, cu control manual de smurf direct în Draft.</p></div><div class="hero-symbol">⚔</div></div>
+        <div class="two-col">
+          <article class="panel">
+            <div class="panel-head"><div><span class="section-kicker">01 / PLAYER POOL</span><h3>Player roster</h3></div><span class="count-chip" id="roster-count">0 PLAYERS</span></div>
+            <label for="player-input">JUCĂTORI <span class="label-hint">virgulă sau linie nouă</span></label>
+            <textarea id="player-input" rows="8" placeholder="Faker&#10;Caps&#10;Jankos&#10;Rekkles&#10;..."></textarea>
+            <div class="field-row"><label class="check-label"><input type="checkbox" id="random-skills" checked> OP.GG Auto Skill pentru Riot ID (Nume#TAG)</label><button class="btn btn-ghost btn-sm" id="load-demo">Încarcă demo</button></div>
+            <div class="hint">Minimum 10 jucători. La 20 jucători primești 4 echipe / 2 meciuri, la 30 primești 6 echipe / 3 meciuri etc. Jucătorii rămași sub un grup complet de 10 apar la Waiting / Reserves.</div>
+            <button class="btn btn-primary full" id="generate-teams">✦ SCOUT & GENERATE BALANCED TEAMS</button>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><span class="section-kicker">02 / MATCH OVERVIEW</span><h3>Draft output</h3></div><span class="status-chip" id="draft-status">AWAITING INPUT</span></div>
+            <div id="teams-output" class="empty-state"><div class="empty-icon">⚔</div><b>Ready when you are</b><p>Adaugă roster-ul și generează echipele pentru a vedea line-up-urile aici.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="tab-arena">
+        <div class="page-intro"><div class="eyebrow">SHOWMATCH MODULE / 1V1</div><h2>Arena <span class="accent">Showdown</span></h2><p>Configurează un duel rapid pentru segmentul următor al stream-ului.</p></div>
+        <div class="arena-card panel">
+          <div class="arena-fighter blue-fighter"><div class="fighter-emblem">B</div><label>BLUE SIDE</label><input id="arena-p1" placeholder="Nume jucător 1"><select id="arena-champ1"><option value="">Alege campion</option></select></div>
+          <div class="vs-mark">VS<span>BEST OF 1</span></div>
+          <div class="arena-fighter red-fighter"><div class="fighter-emblem">R</div><label>RED SIDE</label><input id="arena-p2" placeholder="Nume jucător 2"><select id="arena-champ2"><option value="">Alege campion</option></select></div>
+        </div>
+        <div class="panel action-panel"><div><h3>Ready for the arena?</h3><p>Generează matchup-ul și salvează-l în istoricul producției.</p></div><button class="btn btn-primary" id="generate-arena">GENERATE SHOWDOWN ↗</button></div>
+        <div id="arena-result"></div>
+        <div class="panel module-history"><div class="panel-head"><div><span class="section-kicker">1V1 HISTORY</span><h3>Arena results</h3></div></div><div id="arena-history"></div></div>
+      </section>
+
+      <section class="view" id="tab-bracket">
+        <div class="page-intro"><div class="eyebrow">COMPETITIVE FORMAT / SINGLE ELIMINATION</div><h2>Tournament <span class="accent">Bracket</span></h2><p>Bracket eliminatoriu single-elimination pentru turnee mici sau mari, cu BYE-uri automate când este necesar.</p></div>
+        <div class="panel bracket-setup"><div class="setup-copy"><h3>Team registration</h3><p>Introdu între 2 și 64 de echipe, câte una pe linie. RIFT/OPS construiește automat rundele și BYE-urile necesare.</p></div><textarea id="bracket-input" rows="4" placeholder="Team Alpha&#10;Team Bravo&#10;Team Charlie&#10;Team Delta&#10;Team Echo&#10;Team Foxtrot&#10;Team Golf&#10;Team Hotel"></textarea><button class="btn btn-primary" id="generate-bracket">BUILD BRACKET</button></div>
+        <div class="bracket-tools"><label>URMĂREȘTE ECHIPA<input id="bracket-follow" placeholder="Caută numele echipei"></label><div class="admin-actions"><button class="btn btn-secondary btn-sm staff-only" id="bracket-import-draft">IMPORTĂ DIN DRAFT</button><button class="btn btn-ghost btn-sm staff-only" id="bracket-snapshot">SNAPSHOT BRACKET</button></div></div><div id="bracket-output" class="bracket-board"><div class="empty-state"><div class="empty-icon">⌘</div><b>No tournament loaded</b><p>Adaugă între 2 și 64 de echipe pentru a construi bracket-ul.</p></div></div>
+        <div class="panel module-history"><div class="panel-head"><div><span class="section-kicker">TOURNAMENT HISTORY</span><h3>Bracket results</h3></div></div><div id="tournament-history"></div></div>
+      </section>
+
+      <section class="view" id="tab-profiles">
+        <div class="page-intro"><div class="eyebrow">SCOUTING / PLAYER ANALYTICS</div><h2>Player <span class="accent">Intel</span></h2><p>Inspectează profilul Riot ID cu date OP.GG și calculează automat Rift Rating pentru balancing.</p></div>
+        <div class="panel profile-search"><div class="search-icon">◎</div><div class="search-field"><label for="riot-id">RIOT ID</label><input id="riot-id" placeholder="SummonerName#EUNE" autocomplete="off"></div><button class="btn btn-primary" id="lookup-profile">SCAN PROFILE ↗</button></div>
+        <div id="profile-output" class="profile-output"></div>
+        <div class="notice"><b>ℹ API STATUS</b><span>Sursa principală este OP.GG MCP. Rank, LP, winrate și champion pool vin din OP.GG; Rift Rating 1.00–5.00 este calculat local pentru echilibrarea echipelor.</span></div>
+      </section>
+
+      <section class="view" id="tab-admin">
+        <div class="page-intro"><div class="eyebrow">CONTROL ROOM / MANUAL OVERRIDES</div><h2>Admin <span class="accent">Panel</span></h2><p>Gestionează nivelul de skill al jucătorilor și setările de producție.</p></div>
+        <div class="two-col">
+          <article class="panel"><div class="panel-head"><div><span class="section-kicker">PLAYER MANAGEMENT</span><h3>Player Registry</h3></div></div><p class="subtle">Introdu jucătorii în Team Draft, apoi setează Auto, Skill Floor sau Manual Override. Registry-ul rămâne salvat local și se aplică automat la drafturile următoare.</p><div class="admin-actions"><button class="btn btn-secondary" id="load-admin-roster">LOAD CURRENT ROSTER</button><button class="btn btn-ghost" id="clear-registry">CLEAR REGISTRY</button></div><div id="admin-roster" class="admin-roster"></div></article>
+          <article class="panel"><div class="panel-head"><div><span class="section-kicker">CUSTOM RULES</span><h3>Build slots</h3></div><span class="status-chip">ACTIVE</span></div>
+            <div class="setting-row"><div><b>ADC item slots</b><p>Sloturi dedicate build-ului ADC</p></div><div class="stepper"><button data-step="adc" data-delta="-1">−</button><strong id="adc-slots">7</strong><button data-step="adc" data-delta="1">+</button></div></div>
+            <div class="setting-row"><div><b>Other role slots</b><p>TOP / JNG / MID / SUP</p></div><div class="stepper"><button data-step="other" data-delta="-1">−</button><strong id="other-slots">6</strong><button data-step="other" data-delta="1">+</button></div></div>
+            <div class="divider"></div><div class="section-kicker">MISMATCH DETECTION</div><p class="subtle">Avertizează când diferența de skill între rolurile opuse depășește <b>0.5</b>.</p><div class="setting-row"><div><b>Threshold</b><p>Delta maxim recomandată</p></div><span class="count-chip">0.5 SKILL</span></div>
+            <button class="btn btn-primary full" id="save-settings">SAVE PRODUCTION SETTINGS</button><p class="save-note" id="settings-note"></p>
+          </article>
+        </div>
+        <article class="panel access-manager">
+          <div class="panel-head"><div><span class="section-kicker">ACCES STAFF</span><h3>Administrare acces</h3></div><span class="status-chip">STAFF ONLY</span></div>
+          <p class="subtle">Poți acorda acces unui jucător din Custom Night sau unui nume introdus manual. Parola temporară este afișată o singură dată.</p>
+          <div class="access-create-grid"><div><label>JUCĂTOR / NUME</label><input id="access-new-name" list="access-candidates" placeholder="Name#TAG"><datalist id="access-candidates"></datalist></div><div><label>ROL</label><select id="access-new-role"><option value="admin">ADMIN</option><option value="technician">TECHNICIAN</option></select></div><button class="btn btn-primary" id="access-create-user">ACORDĂ ACCES</button></div>
+          <div class="access-secret" id="access-secret" hidden><div><span>PAROLĂ TEMPORARĂ · SE AFIȘEAZĂ O SINGURĂ DATĂ</span><code id="access-secret-value"></code></div><button class="btn btn-secondary btn-sm" id="access-copy-secret">COPIAZĂ</button></div>
+          <div id="access-users" class="access-users"><div class="subtle">Se încarcă accesul staff…</div></div>
+        </article>
+      </section>
+
+
+      <section class="view" id="tab-tech">
+        <div class="page-intro"><div class="eyebrow">DEVELOPER / DIAGNOSTICS</div><h2>Panou <span class="accent">Tehnician</span></h2><p>Starea serverului, integrarea OP.GG, sesiunile și instrumentele de diagnostic.</p></div>
+        <div class="tech-grid" id="tech-stats"></div><div class="panel"><div class="panel-head"><div><span class="section-kicker">V6 PRE-DEPLOY</span><h3>Release readiness</h3></div><button class="btn btn-secondary btn-sm" id="tech-preflight">RUN PREFLIGHT</button></div><div id="preflight-results" class="tech-logs"><div class="subtle">Run the release check before public deploy.</div></div></div>
+        <div class="panel tech-safety"><div class="panel-head"><div><span class="section-kicker">V5 SAFETY CENTER</span><h3>Developer controls</h3></div><span class="pill" id="integrity-badge">CHECKING</span></div><div class="tech-actions"><button class="btn btn-secondary btn-sm" id="tech-integrity">RUN INTEGRITY CHECK</button><button class="btn btn-secondary btn-sm" id="tech-backup">BACKUP DATA</button><button class="btn btn-ghost btn-sm" id="tech-cache">CLEAR OP.GG CACHE</button><button class="btn btn-ghost btn-sm" id="tech-maintenance">MAINTENANCE: OFF</button></div><div class="save-note" id="tech-action-note">Acțiunile de siguranță sunt disponibile doar rolului Technician.</div></div>
+        <div class="panel"><div class="panel-head"><div><span class="section-kicker">BUG INBOX</span><h3>Community reports</h3></div><button class="btn btn-ghost btn-sm" id="refresh-bugs">REFRESH</button></div><div id="bug-inbox" class="tech-logs"></div></div><div class="panel"><div class="panel-head"><div><span class="section-kicker">LIVE DIAGNOSTICS</span><h3>Request / error logs</h3></div><div class="admin-actions"><button class="btn btn-secondary btn-sm" id="refresh-tech">REFRESH</button><button class="btn btn-ghost btn-sm" id="clear-tech-logs">CLEAR LOGS</button><button class="btn btn-ghost btn-sm" id="revoke-sessions">REVOKE ALL SESSIONS</button></div></div><div id="tech-logs" class="tech-logs"></div></div>
+      </section>
+
+
+      <section class="view active" id="tab-community">
+        <div class="page-intro"><div class="eyebrow">COMMUNITY / SESSION CONTROL</div><h2>Custom Night <span class="accent">Dashboard</span></h2><p>Sesiunea comunității, ready check și raportare rapidă de buguri.</p></div>
+        <div class="hub-grid"><article class="panel"><div class="panel-head"><div><span class="section-kicker">SESSION</span><h3 id="community-name">Custom Night</h3></div><span class="status-chip" id="community-status">SETUP</span></div><div class="staff-only" id="community-staff" hidden><label>SESSION NAME</label><input id="session-name" placeholder="Custom Night #12"><label>STATUS</label><select id="session-status"><option>SETUP</option><option>READY</option><option>LIVE</option><option>COMPLETE</option></select><div class="admin-actions"><button class="btn btn-secondary" id="save-session">SAVE SESSION</button><button class="btn btn-ghost" id="sync-ready-draft">SYNC DIN DRAFT</button><button class="btn btn-ghost" id="clear-ready">CLEAR READY CHECK</button><button class="btn btn-danger" id="delete-session">DELETE SESSION</button></div></div><div id="ready-summary" class="subtle">No ready check yet.</div></article>
+        <article class="panel"><div class="panel-head"><div><span class="section-kicker">READY CHECK</span><h3>I am ready</h3></div></div><label>RIOT ID / DISPLAY NAME</label><input id="ready-name" placeholder="Name#TAG"><div class="admin-actions"><button class="btn btn-secondary" id="ready-yes">✓ READY</button><button class="btn btn-ghost" id="ready-no">NOT READY</button></div><p class="save-note" id="ready-note"></p></article></div>
+        <div class="panel"><div class="panel-head"><div><span class="section-kicker">COMMUNITY SUPPORT</span><h3>Report a bug</h3></div><span class="pill">VIZIBIL TEHNICIANULUI</span></div><textarea id="bug-message" rows="3" placeholder="Ce s-a întâmplat? Spune pe scurt ce ai apăsat și ce ai văzut."></textarea><button class="btn btn-ghost" id="send-bug">SEND BUG REPORT</button><span class="save-note" id="bug-note"></span></div>
+      </section>
+
+      <section class="view" id="tab-history">
+        <div class="page-intro"><div class="eyebrow">SESSION ARCHIVE / LOCAL STORAGE</div><h2>Match <span class="accent">History</span></h2><p>Toate meciurile generate în această sesiune de browser sunt păstrate local.</p></div>
+        <div class="panel"><div class="panel-head"><div><span class="section-kicker">RECENT ACTIVITY</span><h3>Production log</h3></div></div><div id="history-list"><div class="empty-state"><div class="empty-icon">◷</div><b>Nothing logged yet</b><p>Meciurile generate vor apărea aici.</p></div></div></div>
+      </section>
+      <footer>RIFT/OPS · v12.0.0 · COMMUNITY BUILD <span>UNOFFICIAL COMMUNITY TOOL · NOT AFFILIATED WITH RIOT GAMES</span></footer>
+    </main>
+  </div>
+
+
+  <div class="auth-modal patch-modal" id="patch-notes-modal" hidden>
+    <div class="auth-card patch-card">
+      <button class="auth-close" id="patch-notes-close" aria-label="Închide istoricul actualizărilor">×</button>
+      <div class="section-kicker">RIFT/OPS / ISTORIC ACTUALIZĂRI</div>
+      <div class="patch-title-row"><div><h3>Istoric actualizări</h3><p>Principalele schimbări vizibile și utile pentru comunitate.</p></div><span class="status-chip">v12.0.0</span></div>
+      <div class="patch-list">
+        <section class="patch-release current"><div class="patch-version"><b>V12.0</b><span>ACTUAL</span></div><h4>Autopilot asistat și Centru de Decizii</h4><ul><li>Draft-ul poate sincroniza automat participanții în Ready Check și meciurile în Production Queue.</li><li>RIFT/OPS creează automat checkpoint-uri de siguranță și arhivează sesiunile sau turneele finalizate fără pași manuali suplimentari.</li><li>A fost introdus un Centru de Decizii care separă munca automată de acțiunile ce trebuie confirmate de staff.</li><li>Bracket-ul poate importa direct numele echipelor din Draft.</li><li>Staff-ul poate regla nivelul de automatizare fără a ceda controlul asupra rezultatelor sau accesului.</li><li>Au fost îmbunătățite recuperarea, continuitatea și vizibilitatea acțiunilor automate.</li></ul></section><section class="patch-release"><div class="patch-version"><b>V10.2</b></div><h4>Automatizare și administrarea accesului</h4><ul><li>RIFT/OPS protejează automat starea activă a draftului și turneului prin snapshot-uri de siguranță.</li><li>Staff-ul poate acorda sau revoca acces Admin și Technician direct din panoul de administrare.</li><li>Jucătorii prezenți în Custom Night pot fi selectați rapid atunci când primesc acces staff.</li><li>Schimbările de rol și resetările de acces invalidează automat sesiunile vechi.</li><li>Parolele temporare pentru conturile noi sunt afișate o singură dată.</li><li>Au fost reduse alte operații repetitive și îmbunătățită continuitatea sesiunilor.</li></ul></section><section class="patch-release"><div class="patch-version"><b>V10.0</b></div><h4>Operațiuni mai rapide și recuperare automată</h4><ul><li>Draftul și bracket-ul activ sunt sincronizate automat pentru staff și pot fi recuperate după refresh sau schimbarea dispozitivului.</li><li>A fost adăugat un sistem de snapshot-uri pentru revenirea rapidă la o stare sigură a serii.</li><li>Trimiterea unui meci către LIVE verifică acum structura echipelor înainte de pornire.</li><li>Bracket-ul mare poate fi filtrat vizual după o echipă pentru urmărirea mai ușoară a parcursului.</li><li>Centrul Operațional oferă feedback despre sincronizare și acces rapid la recuperare.</li><li>Au fost reduși pașii redundanți și au fost uniformizate acțiunile administrative.</li><li>Au fost făcute îmbunătățiri generale de stabilitate, persistență și utilizare.</li></ul></section><section class="patch-release"><div class="patch-version"><b>V8.1</b></div><h4>Glow up și flux operațional</h4><ul><li>A fost modernizată interfața pentru o navigare mai rapidă și o ierarhie vizuală mai clară.</li><li>Staff-ul are acum un centru operațional care arată dintr-o privire starea draftului, Ready Check-ului, meciului live și turneului.</li><li>Următoarea acțiune recomandată este evidențiată automat pentru a reduce pașii inutili în timpul unui Custom Night.</li><li>Navigarea și denumirile principale au fost simplificate și uniformizate în limba română.</li><li>Interfața a fost curățată de elemente redundante, iar acțiunile secundare sunt mai discrete.</li><li>Au fost îmbunătățite stările de focus, contrastul, feedback-ul vizual și afișarea pe ecrane mai mici.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V7.1</b><span>ACCES</span></div><h4>Acces și interfață</h4><ul><li>Interfața afișează acum doar zonele și opțiunile potrivite fiecărui tip de utilizator.</li><li>Zonele de administrare și producție au fost separate mai clar de experiența jucătorilor.</li><li>Rolurile din partea de sus a site-ului au fost simplificate pentru o prezentare mai curată.</li><li>Au fost făcute îmbunătățiri generale de siguranță, stabilitate și organizare.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V7.0</b><span>AUTOMATIZARE</span></div><h4>Flux de lucru automatizat</h4><ul><li>Draftul și bracket-ul activ se păstrează mai bine între reîmprospătări.</li><li>Numele echipelor și modificările importante din draft sunt păstrate automat.</li><li>Turneele finalizate pot fi trecute automat în istoric.</li><li>Au fost îmbunătățite administrarea sesiunilor, istoricul și continuitatea dintre meciuri.</li><li>Bracket-ul a fost extins pentru turnee mai mari și gestionează automat rundele necesare.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V6.5</b><span>FLUX ADMIN</span></div><h4>Echipe și administrare</h4><ul><li>Administratorul poate atribui nume personalizate echipelor.</li><li>Acțiunile de mutare și schimbare a jucătorilor au fost simplificate.</li><li>Au fost adăugate opțiuni mai clare pentru eliminarea și înlocuirea jucătorilor.</li><li>A fost adăugată posibilitatea de revenire rapidă după anumite modificări făcute din greșeală.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V6.3</b><span>TURNEE</span></div><h4>Bracket și istoric</h4><ul><li>Au fost îmbunătățite bracket-urile și istoricul turneelor.</li><li>Rezultatele pot fi corectate mai ușor, iar intrările din istoric pot fi eliminate de staff.</li><li>Controalele de mutare a jucătorilor au fost făcute mai compacte.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V6.2</b><span>COMUNITATE</span></div><h4>Prezentare și stabilitate</h4><ul><li>A fost adăugat istoricul actualizărilor direct în site.</li><li>Au fost corectate mai multe probleme vizuale întâlnite în versiunile anterioare.</li><li>Au fost făcute ajustări generale pentru stabilitate și utilizare.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V6.1</b><span>CORECȚII</span></div><h4>Rank și prezentare</h4><ul><li>Au fost îmbunătățite emblemele afișate pentru rank-ul efectiv.</li><li>Modurile AUTO, FLOOR și OVERRIDE actualizează corect rank-ul afișat.</li><li>Au fost corectate diferențele de dimensiune dintre anumite embleme.</li><li>Au fost făcute mici îmbunătățiri ale interfeței.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V6.0</b><span>SESIUNI</span></div><h4>Custom Night</h4><ul><li>A fost introdus sistemul Custom Night pentru organizarea sesiunilor de joc.</li><li>A fost adăugat Ready Check pentru participanți.</li><li>Istoricul meciurilor poate fi păstrat între sesiuni.</li><li>Au fost îmbunătățite instrumentele pentru administrarea meciurilor și a jucătorilor.</li><li>A fost adăugat un sistem simplu pentru raportarea problemelor întâlnite pe site.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V5.0</b><span>STABILITATE</span></div><h4>Fiabilitate</h4><ul><li>Au fost făcute îmbunătățiri generale de stabilitate.</li><li>Datele importante ale sesiunilor sunt păstrate mai sigur.</li><li>Au fost îmbunătățite sistemele pentru meciuri și transmisiuni.</li><li>Au fost corectate situații în care anumite date nu se actualizau corect.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V4.0</b><span>BALANSARE</span></div><h4>Draft și evaluare</h4><ul><li>A fost îmbunătățită balansarea echipelor și comparația directă între roluri.</li><li>Au fost introduse modurile AUTO, FLOOR și OVERRIDE.</li><li>Rank-ul real OP.GG este afișat separat de evaluarea folosită pentru balansarea customurilor.</li><li>Au fost îmbunătățite controalele de administrare din Draft.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V3.0</b><span>MECIURI</span></div><h4>Turnee și transmisiuni</h4><ul><li>A fost adăugată administrarea meciurilor live.</li><li>Au fost introduse elemente pentru transmisiuni și prezentarea rezultatelor.</li><li>Au fost îmbunătățite coada de meciuri și prezentarea înainte și după joc.</li><li>Au fost extinse modurile Tournament și 1v1.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V2.0</b><span>JUCĂTORI</span></div><h4>OP.GG și Player Intel</h4><ul><li>A fost introdusă integrarea OP.GG pentru jucătorii cu Riot ID.</li><li>Au fost adăugate rank-ul, forma recentă și informații utile pentru evaluarea jucătorilor.</li><li>Balansarea a început să țină cont mai bine de rol și nivelul estimat pentru customuri.</li><li>A fost îmbunătățită zona Player Intel.</li></ul></section>
+        <section class="patch-release"><div class="patch-version"><b>V1.0</b><span>ÎNCEPUT</span></div><h4>Prima versiune</h4><ul><li>A fost lansată prima versiune RIFT/OPS.</li><li>A fost adăugat generatorul de echipe 5v5.</li><li>Echipele folosesc rolurile TOP, JNG, MID, ADC și SUP.</li><li>Au fost introduse primele instrumente pentru administrarea jucătorilor și meciurilor.</li><li>A fost creată interfața inițială pentru custom games.</li></ul></section>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="auth-modal" id="automation-modal" hidden><div class="auth-card workflow-card"><button class="auth-close" id="automation-modal-close">×</button><div class="section-kicker">V12 / AUTOPILOT</div><h3>Setări automatizare</h3><p>Automatizările de mai jos pregătesc și protejează operațiunile. Nu aleg câștigători, nu schimbă roluri staff și nu pornesc meciuri singure.</p><div class="automation-settings"><label><input type="checkbox" id="auto-protect"> Snapshot-uri automate de siguranță</label><label><input type="checkbox" id="auto-ready"> Sincronizează Draft → Ready Check</label><label><input type="checkbox" id="auto-production"> Sincronizează Draft → Production Queue</label><label><input type="checkbox" id="auto-archive-session"> Arhivează automat Custom Night finalizat</label><label><input type="checkbox" id="auto-archive-tournament"> Arhivează automat turneul finalizat</label><label>INTERVAL SNAPSHOT<select id="auto-snapshot-minutes"><option value="2">2 minute</option><option value="5">5 minute</option><option value="10">10 minute</option><option value="15">15 minute</option><option value="30">30 minute</option></select></label></div><button class="btn btn-primary full" id="automation-save">SALVEAZĂ AUTOMATIZAREA</button><p class="save-note" id="automation-save-note"></p></div></div>
+  <div class="auth-modal" id="workflow-modal" hidden><div class="auth-card workflow-card"><button class="auth-close" id="workflow-modal-close">×</button><div class="section-kicker">RECUPERARE OPERAȚIONALĂ</div><h3>Snapshot-uri recente</h3><p>Revino la un draft și bracket salvate anterior. Restaurarea înlocuiește starea operațională curentă.</p><div id="workflow-snapshot-list" class="snapshot-list"></div></div></div>
+  <div class="auth-modal" id="auth-modal" hidden><div class="auth-card"><button class="auth-close" id="auth-close">×</button><div class="section-kicker">ACCES RIFT/OPS</div><h3>Autentificare staff</h3><p>Introdu parola primită. Rolul este detectat automat.</p><input id="auth-password" type="password" autocomplete="current-password" placeholder="Access password"><button class="btn btn-primary full" id="auth-submit">INTRĂ</button><p class="save-note" id="auth-note"></p></div></div>
+  <script src="/app.js"></script>
+  <script src="/series-ui.js"></script>
+</body>
+</html>
