@@ -92,7 +92,16 @@ function requireRecentAuth(req,res,next){
 function requireRole(...roles){ return (req,res,next)=>{ const user=currentUser(req); if(!user) return res.status(401).json({error:"Authentication required."}); if(!roles.includes(user.role)) return res.status(403).json({error:"Insufficient permissions."}); req.user=user; next(); }; }
 function requireStaff(req,res,next){ return requireRole("admin","technician")(req,res,next); }
 function appendAudit(action, req, meta={}) { const row={time:new Date().toISOString(),action,actor:req?.user?.name||currentUser(req)?.name||"visitor",role:req?.user?.role||currentUser(req)?.role||"visitor",requestId:req?.requestId||null,...meta}; try{fs.appendFileSync(AUDIT_FILE,JSON.stringify(row)+"\n");}catch{} }
-function appendTechLog(level, event, meta={}) { const safe={time:new Date().toISOString(),level,event,...meta}; try{rotateLogIfNeeded();fs.appendFileSync(LOG_FILE,JSON.stringify(safe)+"\n");}catch{} }
+function redactDiagnostic(value){return String(value).replace(/(?:postgres(?:ql)?:|https?:)\/\/[^\s"'<>]+/gi,'[redacted URL]').replace(/(?:RGAPI-|RIFT-)[A-Za-z0-9_-]+/g,'[redacted credential]').replace(/(password|token|secret|authorization|cookie|connectionString)\s*[:=]\s*[^\s,;]+/gi,'$1=[redacted]').slice(0,2000);}
+const serverErrors=[];
+function recordServerError(req,category,message,status=500,code='INTERNAL'){
+  const item={id:crypto.randomUUID(),time:new Date().toISOString(),category,message:redactDiagnostic(message),status,code:/^[A-Z0-9_]{1,40}$/.test(String(code))?code:'INTERNAL',method:req.method,path:req.path,requestId:req.requestId};
+  serverErrors.unshift(item);serverErrors.splice(200);appendTechLog('ERROR','server_error',item);return item;
+}
+storage.onError=(error,req)=>{viewStats.errors++;recordServerError(req,'STORAGE',error.message,503,error.code||'STORAGE_UNAVAILABLE');};
+// Error telemetry must survive the transaction that failed.
+storage.onRollback=req=>{for(const item of serverErrors.filter(x=>x.requestId===req.requestId))appendTechLog('ERROR','server_error',item);};
+function appendTechLog(level, event, meta={}) { meta=Object.fromEntries(Object.entries(meta).filter(([k])=>!/(password|token|secret|cookie|authorization|connectionString)/i.test(k)).map(([k,v])=>[k,typeof v==='string'?redactDiagnostic(v):v])); const safe={time:new Date().toISOString(),level,event,...meta}; try{rotateLogIfNeeded();fs.appendFileSync(LOG_FILE,JSON.stringify(safe)+"\n");}catch{} }
 
 function automationSettings(){
   const raw=readJson(AUTOMATION_FILE,{});
@@ -229,7 +238,7 @@ setInterval(()=>{const now=Date.now();for(const [key,b] of requestLimits)if(b.un
 app.use((req,res,next)=>{
   req.requestId=crypto.randomUUID();res.setHeader("X-Request-Id",req.requestId);
   const json=res.json.bind(res);
-  res.json=body=>{if(res.statusCode>=400){appendTechLog("WARN","request_rejected",{path:req.path,status:res.statusCode,requestId:req.requestId});body={error:res.statusCode>=500?"Request failed":body?.error||"Request rejected",...(body?.code?{code:body.code}:{}),requestId:req.requestId};}return json(body);};
+  res.json=body=>{if(res.statusCode>=400){appendTechLog("WARN","request_rejected",{path:req.path,status:res.statusCode,requestId:req.requestId});if(res.statusCode>=500)recordServerError(req,req.path.includes("series")?"SERIES":"INTERNAL",body?.error||"Request failed",res.statusCode);body={error:res.statusCode>=500?"Request failed":body?.error||"Request rejected",...(body?.code?{code:body.code}:{}),requestId:req.requestId};}return json(body);};
   if(PRODUCTION){res.setHeader("Strict-Transport-Security","max-age=31536000");if(!req.secure)return res.status(400).json({error:"HTTPS required."});}
   if(!req.path.startsWith("/api/"))return next();
   const group=req.path.startsWith("/api/auth/")?"auth":req.path.startsWith("/api/tech/")||req.path.startsWith("/api/admin/")?"staff":"public";
@@ -1235,6 +1244,15 @@ app.get("/api/tech/logs", requireRole("technician"), (req,res)=>{
 });
 
 registerSeries(app,{requireStaff,read:()=>readJson(SERIES_FILE,[]),write:rows=>writeJson(SERIES_FILE,rows),audit:appendAudit});
+app.get("/api/tech/errors", requireRole("technician"), (_req,res)=>{
+  let saved=[];try{saved=fs.readFileSync(LOG_FILE,'utf8').trim().split(/\r?\n/).map(line=>{try{return JSON.parse(line)}catch{return null}}).filter(x=>x?.event==='server_error');}catch{}
+  const merged=new Map([...saved,...serverErrors].map(x=>[x.id,x]));res.json({success:true,errors:[...merged.values()].sort((a,b)=>b.time.localeCompare(a.time)).slice(0,200)});
+});
+app.post("/api/tech/errors/resolve", requireRole("technician"), (req,res)=>{
+  const id=String(req.body?.id||'');const item=serverErrors.find(x=>x.id===id);if(item)item.resolved=true;
+  let lines=[];try{lines=fs.readFileSync(LOG_FILE,'utf8').trim().split(/\r?\n/).filter(Boolean).map(line=>{try{const x=JSON.parse(line);if(x.event==='server_error'&&x.id===id)x.resolved=true;return JSON.stringify(x);}catch{return line}});}catch{}
+  fs.writeFileSync(LOG_FILE,lines.join('\n')+'\n');appendAudit('error.resolve',req,{id});res.json({success:true});
+});
 app.use("/api", (req,res)=>res.status(404).json({error:"API endpoint not found.",requestId:req.requestId}));
 app.use((err,req,res,next)=>{ appendTechLog("ERROR","unhandled_request_error",{message:String(err?.message||err),path:req.path,requestId:req.requestId}); if(res.headersSent)return next(err); res.status(err?.type==="entity.too.large"?413:err instanceof SyntaxError?400:500).json({error:"Request failed",requestId:req.requestId}); });
 app.use((req,res)=>res.sendFile(path.join(__dirname,"public","index.html")));
@@ -1243,7 +1261,7 @@ let lastAutoBackupDay="";
 function automaticSafetyBackup(){ const day=new Date().toISOString().slice(0,10); if(day===lastAutoBackupDay)return; lastAutoBackupDay=day; [REGISTRY_FILE,PRODUCTION_FILE,SETTINGS_FILE,AUTOMATION_FILE,COMMUNITY_FILE,BUGS_FILE,HISTORY_FILE,WORKFLOW_FILE,SNAPSHOTS_FILE,SERIES_FILE].forEach((f,i)=>safeBackup(f,["registry","production","settings","automation","community","bugs","history","workflow","snapshots","series"][i])); appendTechLog("INFO","automatic_daily_backup",{day}); }
 await storage.transaction(automaticSafetyBackup); setInterval(()=>storage.transaction(automaticSafetyBackup).catch(()=>console.error("Automatic backup failed.")),60*60*1000).unref();
 
-const server=app.listen(PORT,()=>{ appendTechLog("INFO","server_started",{version:"12.2.0",port:PORT,region:OPGG_REGION}); console.log(`RIFT/OPS 12.2.0 • http://localhost:${PORT} • OP.GG ${OPGG_REGION.toUpperCase()}`); });
+const server=app.listen(PORT,()=>{ appendTechLog("INFO","server_started",{version:"12.2.1",port:PORT,region:OPGG_REGION}); console.log(`RIFT/OPS 12.2.1 • http://localhost:${PORT} • OP.GG ${OPGG_REGION.toUpperCase()}`); });
 for(const sig of ["SIGINT","SIGTERM"]){ process.on(sig,()=>{ appendTechLog("INFO","server_shutdown",{signal:sig}); server.close(async()=>{await storage.close();process.exit(0);}); setTimeout(()=>process.exit(1),5000).unref(); }); }
 process.on("unhandledRejection",reason=>appendTechLog("ERROR","unhandled_rejection",{message:String(reason)}));
 process.on("uncaughtException",err=>{appendTechLog("ERROR","uncaught_exception",{message:err.message,stack:String(err.stack||"").slice(0,2000)}); console.error(err);});

@@ -1,6 +1,6 @@
 {
   "name": "rift-ops-opgg",
-  "version": "12.2.0",
+  "version": "12.2.1",
   "private": true,
   "type": "module",
   "description": "RIFT/OPS assisted-autopilot competitive operations platform with decision center, workflow automation, staff access management, OP.GG scouting and role-aware balancing",
@@ -13,7 +13,7 @@
     "preflight": "node scripts/preflight.js",
     "security:audit": "node scripts/permission-audit.js",
     "release:check": "npm run check && npm run preflight && npm run security:audit && npm test",
-    "test": "node --test scripts/series.test.js",
+    "test": "node --test scripts/series.test.js scripts/frontend.test.js",
     "build": "npm run check",
     "db:import": "node scripts/import-data.js",
     "test:neon": "node --test scripts/neon-e2e.test.js"

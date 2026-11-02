@@ -42,7 +42,7 @@ export const storage={
       return await context.run(scope,async()=>{
         try{
           const result=await fn();
-          if(result?.storageRollback)throw Error('Request failed; transaction rolled back.');
+          if(result?.storageRollback){await client.query('ROLLBACK');scope.closed=true;return result;}
           for(const k of scope.dirty)await client.query('INSERT INTO rift_documents(namespace,key,contents) VALUES($1,$2,$3) ON CONFLICT(namespace,key) DO UPDATE SET contents=EXCLUDED.contents,updated_at=now()',[namespace,k,files.get(k)]);
           for(const k of scope.deleted)await client.query('DELETE FROM rift_documents WHERE namespace=$1 AND key=$2',[namespace,k]);
           await client.query('COMMIT');scope.closed=true;initial=new Map(files);return result;
@@ -60,10 +60,11 @@ export const storage={
         resolve({chunk,encoding,callback,storageRollback:res.statusCode>=500});return res;
       };
       next();
-    })).then(({chunk,encoding,callback})=>end(chunk,encoding,callback)).catch(()=>{
+    })).then(({chunk,encoding,callback,storageRollback})=>{if(storageRollback)storage.onRollback?.(req);end(chunk,encoding,callback);}).catch(error=>{
+      storage.onError?.(error,req);
       res.end=end;if(res.destroyed)return;
-      res.removeHeader('Content-Length');res.statusCode=503;res.setHeader('Content-Type','application/json');
-      end(JSON.stringify({error:'Data storage unavailable. Please retry.',requestId:req.requestId}));
+      res.removeHeader('Content-Length');res.removeHeader('Set-Cookie');res.statusCode=503;res.setHeader('Content-Type','application/json');
+      end(JSON.stringify({error:'Data storage unavailable. Please retry.',code:'STORAGE_UNAVAILABLE',requestId:req.requestId}));
     });
   },
   async close(){await pending;await pool?.end();},
