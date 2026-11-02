@@ -35,6 +35,13 @@ test('Series workflow, persistence, CSRF and staff permission boundaries',async(
     assert.equal((await request('/api/tech/logs','GET',undefined,admin)).status,403);
     assert.equal((await request('/api/admin/series','POST',{blue:'A',red:'a',bestOf:3},admin)).status,400);
     assert.equal((await request('/api/admin/series','POST',{blue:'A',red:'B',bestOf:2},admin)).status,400);
+    const bracket=[{name:'FINAL',matches:[{teams:[{name:'Blue'},{name:'Red'}],winner:null}]}];
+    assert.equal((await request('/api/admin/workflow/snapshots','POST',{label:'Empty'},admin)).status,400);
+    assert.equal((await request('/api/admin/workflow/snapshots','POST',{bracket},undefined)).status,401);
+    const snap=await request('/api/admin/workflow/snapshots','POST',{label:'Bracket QA',bracket},admin);assert.equal(snap.status,200);
+    assert.deepEqual((await request('/api/admin/workflow/snapshots','GET',undefined,admin)).body.snapshots[0].bracket,bracket);
+    assert.equal((await request('/api/admin/workflow/snapshots/'+snap.body.snapshot.id+'/restore','POST',{},admin)).status,200);
+    assert.deepEqual((await request('/api/admin/workflow','GET',undefined,admin)).body.workflow.bracket,bracket);
     const created=await request('/api/admin/series','POST',{blue:'A',red:'B',bestOf:3},admin);assert.equal(created.status,201);const id=created.body.item.id;
     const game=revision=>request(`/api/admin/series/${id}/games`,'POST',{revision,winner:'blue'},admin);
     const simultaneous=await Promise.all([game(0),game(0)]);assert.deepEqual(simultaneous.map(x=>x.status).sort(),[200,409]);
@@ -45,6 +52,7 @@ test('Series workflow, persistence, CSRF and staff permission boundaries',async(
     assert.equal((await game(2)).status,409);
     assert.equal((await request(`/api/admin/series/${id}/games/last`,'DELETE',{revision:2},tech)).status,200);
     await stop();await start();
+    assert.ok((await request("/api/admin/workflow/snapshots","GET",undefined,admin)).body.snapshots.some(x=>x.id===snap.body.snapshot.id));
     let item=(await request('/api/admin/series','GET',undefined,admin)).body.series[0];assert.equal(item.games.length,1);assert.equal(item.revision,3);
     assert.equal((await request('/api/tech/maintenance','POST',{enabled:true},tech)).body.code,'REAUTH_REQUIRED');
     assert.equal((await request('/api/auth/reauth','POST',{password:'wrong-password'},tech)).status,401);

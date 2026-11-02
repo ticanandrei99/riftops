@@ -155,3 +155,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .bracket-team{flex-wrap:wrap;gap:5px}.bracket-team>span{min-width:0;overflow-wrap:anywhere;flex:1 1 90px}
 .tech-error-details{padding:12px;border-bottom:1px solid #344258;overflow-wrap:anywhere;line-height:1.7}.tech-error-details pre{white-space:pre-wrap}
 @media(max-width:700px){.result-history-row,.history-row{grid-template-columns:minmax(0,1fr)}.result-history-row .history-delete{grid-column:1}.history-row button{justify-self:start}}
+
+/* Production log: one team below the other, one player per line. */
+.history-lineups{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px}
+.history-lineup{padding:10px 14px;border-left:2px solid var(--cyan);background:#0a1320;border-radius:0 6px 6px 0;min-width:0}
+.history-lineup.red{border-left-color:var(--red)}
+.history-lineup>b{display:block;color:var(--cyan);font-size:11px;margin-bottom:7px;overflow-wrap:anywhere}
+.history-lineup.red>b{color:var(--red)}
+.history-lineup ul{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.history-lineup li{font-size:11px;color:#aebbd0;line-height:1.6;overflow-wrap:anywhere}

@@ -480,10 +480,22 @@ $("#load-admin-roster").addEventListener("click",renderRegistry);
 $("#clear-registry").addEventListener("click",()=>{if(confirm("Ștergi toate override-urile și alias-urile salvate?")){fetch("/api/admin/registry",{method:"DELETE"}).then(()=>{registry={};renderRegistry();});}});
 $$("[data-step]").forEach(btn=>btn.addEventListener("click",()=>{const k=btn.dataset.step;settings[k]=Math.max(1,Math.min(k==="adc"?7:6,settings[k]+Number(btn.dataset.delta)));renderAdmin();}));
 $("#save-settings").addEventListener("click",()=>{localStorage.setItem(KEY_SETTINGS,JSON.stringify(settings));$("#settings-note").textContent="✓ Settings saved locally.";setTimeout(()=>$("#settings-note").textContent="",2600);});
+function historyDetailsMarkup(item){
+ const details=String(item.details||'');
+ if(String(item.type).toUpperCase()!=='5V5')return '<div class="history-meta">'+esc(details)+'</div>';
+ const teams=details.split(/\s+\|\s+/).map(part=>{
+  const divider=part.indexOf(':');if(divider<1)return null;
+  const name=part.slice(0,divider).trim(),players=part.slice(divider+1).trim().split(/,\s*(?=(?:TOP|JNG|MID|ADC|SUP|FILL)\s)/);
+  if(!players.length||players.some(p=>! /^(TOP|JNG|MID|ADC|SUP|FILL)\s/.test(p)))return null;
+  return {name,players};
+ });
+ if(teams.length!==2||teams.some(t=>!t))return '<div class="history-meta">'+esc(details)+'</div>';
+ return '<div class="history-lineups">'+teams.map((t,i)=>'<section class="history-lineup '+(i?'red':'blue')+'"><b>'+esc(t.name)+'</b><ul>'+t.players.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul></section>').join('')+'</div>';
+}
 function renderHistory(){
   const wrap=$("#history-list");
   if(!history.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">◷</div><b>Nothing logged yet</b><p>Meciurile generate vor apărea aici.</p></div>';return;}
-  wrap.innerHTML=history.map(h=>`<div class="history-row"><div class="history-type">${esc(h.type)}</div><div><div class="history-title">${esc(h.title)}</div><div class="history-meta">${esc(h.time)} · ${esc(h.details)}</div></div>${canStaff()?`<button data-delete="${h.id}">REMOVE</button>`:``}</div>`).join("");
+  wrap.innerHTML=history.map(h=>`<div class="history-row"><div class="history-type">${esc(h.type)}</div><div><div class="history-title">${esc(h.title)}</div><div class="history-meta">${esc(h.time)}</div>${historyDetailsMarkup(h)}</div>${canStaff()?`<button data-delete="${h.id}">REMOVE</button>`:``}</div>`).join("");
   $$("[data-delete]",wrap).forEach(b=>b.addEventListener("click",()=>{history=history.filter(h=>String(h.id)!==b.dataset.delete);saveHistory();}));
 }
 $("#clear-history")?.addEventListener("click",()=>{if(!canStaff())return;if(confirm("Ștergi tot istoricul local?")){history=[];saveHistory();}});
@@ -635,10 +647,26 @@ async function syncPersistentHistory(){
   if(!canStaff()) return;
   try{ const r=await fetch('/api/admin/history'); if(!r.ok)return; const d=await r.json(); const server=(d.history||[]).map(x=>({id:'srv-'+x.id,serverId:x.id,type:x.type,title:x.title,details:x.details,winner:x.winner,loser:x.loser,time:new Date(x.time).toLocaleString('ro-RO')})); const localOnly=history.filter(x=>!x.serverId); history=[...server,...localOnly].slice(0,500); saveHistory(); }catch{}
 }
-async function createWorkflowSnapshot(label='Snapshot manual'){if(!canStaff())return;const r=await fetch('/api/admin/workflow/snapshots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({label,draft:currentTeams,bracket:bracketState})});if(r.ok){const b=$('#workflow-snapshot');if(b){const old=b.textContent;b.textContent='✓ SALVAT';setTimeout(()=>b.textContent=old,1600);}}}
-$('#workflow-snapshot')?.addEventListener('click',()=>createWorkflowSnapshot(`Custom Night · ${new Date().toLocaleString('ro-RO')}`));
-$('#bracket-snapshot')?.addEventListener('click',()=>createWorkflowSnapshot(`Bracket · ${new Date().toLocaleString('ro-RO')}`));
-async function openWorkflowSnapshots(){if(!canStaff())return;const modal=$('#workflow-modal'),list=$('#workflow-snapshot-list');modal.hidden=false;list.innerHTML='<p class="subtle">Se încarcă…</p>';const r=await fetch('/api/admin/workflow/snapshots'),d=await r.json();const rows=d.snapshots||[];list.innerHTML=rows.length?rows.map(x=>`<div class="snapshot-row"><div><b>${esc(x.label)}</b><small>${new Date(x.time).toLocaleString('ro-RO')} · ${esc(x.by||'staff')}</small></div><div><button class="btn btn-secondary btn-sm" data-snapshot-restore="${x.id}">RESTORE</button><button class="btn btn-ghost btn-sm" data-snapshot-delete="${x.id}">REMOVE</button></div></div>`).join(''):'<p class="subtle">Nu există snapshot-uri încă.</p>';}
+async function createWorkflowSnapshot(label='Snapshot manual',button=$('#workflow-snapshot')){
+ if(!canStaff())return;
+ const old=button?.textContent;if(button){button.disabled=true;button.textContent='SE SALVEAZĂ…';}
+ try{
+  if(!currentTeams&&!bracketState?.length)throw Error('Construiește mai întâi un Draft sau Bracket.');
+  const r=await fetch('/api/admin/workflow/snapshots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({label,draft:currentTeams,bracket:bracketState})});
+  const d=await r.json();if(!r.ok)throw Error((d.error||'Snapshot-ul nu a putut fi salvat.')+(d.requestId?' · Request ID: '+d.requestId:''));
+  if(button)button.textContent='✓ SNAPSHOT SALVAT';
+  await openWorkflowSnapshots();
+ }catch(e){if(button)button.textContent='⚠ SALVARE EȘUATĂ';alert(e.message||'Snapshot-ul nu a putut fi salvat.');}
+ finally{if(button){button.disabled=false;setTimeout(()=>button.textContent=old,2000);}}
+}
+$('#workflow-snapshot')?.addEventListener('click',e=>createWorkflowSnapshot('Custom Night · '+new Date().toLocaleString('ro-RO'),e.currentTarget));
+$('#bracket-snapshot')?.addEventListener('click',e=>createWorkflowSnapshot('Bracket · '+new Date().toLocaleString('ro-RO'),e.currentTarget));
+async function openWorkflowSnapshots(){
+ if(!canStaff())return;const modal=$('#workflow-modal'),list=$('#workflow-snapshot-list');modal.hidden=false;list.textContent='Se încarcă…';
+ try{const r=await fetch('/api/admin/workflow/snapshots'),d=await r.json();if(!r.ok)throw Error((d.error||'Lista snapshot-urilor nu a putut fi încărcată.')+(d.requestId?' · Request ID: '+d.requestId:''));
+ const rows=d.snapshots||[];list.innerHTML=rows.length?rows.map(x=>`<div class="snapshot-row"><div><b>${esc(x.label)}</b><small>${new Date(x.time).toLocaleString('ro-RO')} · ${esc(x.by||'staff')}</small></div><div><button class="btn btn-secondary btn-sm" data-snapshot-restore="${esc(x.id)}">RESTORE</button><button class="btn btn-ghost btn-sm" data-snapshot-delete="${esc(x.id)}">REMOVE</button></div></div>`).join(''):'<p class="subtle">Nu există snapshot-uri încă.</p>';
+ }catch(e){list.textContent=e.message||'Lista snapshot-urilor nu a putut fi încărcată.';}
+}
 $('#workflow-snapshots-open')?.addEventListener('click',openWorkflowSnapshots);$('#workflow-modal-close')?.addEventListener('click',()=>$('#workflow-modal').hidden=true);$('#workflow-modal')?.addEventListener('click',e=>{if(e.target.id==='workflow-modal')e.currentTarget.hidden=true;});
 document.addEventListener('click',async e=>{const restore=e.target.closest('[data-snapshot-restore]'),del=e.target.closest('[data-snapshot-delete]');if(restore&&canStaff()){if(!confirm('Restaurezi acest snapshot? Starea curentă va fi înlocuită.'))return;const r=await fetch(`/api/admin/workflow/snapshots/${restore.dataset.snapshotRestore}/restore`,{method:'POST'}),d=await r.json();if(r.ok){currentTeams=d.workflow.draft||null;bracketState=d.workflow.bracket||null;saveDraftState();saveBracketState();if(currentTeams)renderDraft(currentTeams);if(bracketState)renderBracket();refreshQueueFromDraft();$('#workflow-modal').hidden=true;showTab('hub');}}if(del&&canStaff()){if(!confirm('Ștergi snapshot-ul?'))return;await fetch(`/api/admin/workflow/snapshots/${del.dataset.snapshotDelete}`,{method:'DELETE'});openWorkflowSnapshots();}});
 $('#bracket-follow')?.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();$$('.bracket-match').forEach(card=>{if(!q){card.classList.remove('bracket-dim','bracket-focus');return;}const hit=card.textContent.toLowerCase().includes(q);card.classList.toggle('bracket-focus',hit);card.classList.toggle('bracket-dim',!hit);});});

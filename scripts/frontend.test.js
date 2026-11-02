@@ -35,3 +35,16 @@ test('Reauthentication retries the original action only after success and expose
   assert.equal(result.status,accepted?200:401);assert.equal(attempts,accepted?2:1);
  }
 });
+
+test('Bracket snapshot confirms on the clicked button and surfaces storage failures',async()=>{
+ const source=fs.readFileSync('public/app.js','utf8');const code=source.slice(source.indexOf('async function createWorkflowSnapshot('),source.indexOf("$('#workflow-snapshot')?.addEventListener",source.indexOf('async function createWorkflowSnapshot(')));
+ for(const ok of [true,false]){
+  const button={textContent:'SNAPSHOT BRACKET',disabled:false};let opened=0;const alerts=[];
+  const ctx=vm.createContext({canStaff:()=>true,currentTeams:null,bracketState:[{name:'FINAL',matches:[]}],$:()=>button,setTimeout:()=>{},alert:message=>alerts.push(message),openWorkflowSnapshots:async()=>{opened++},fetch:async(url,options)=>{
+   assert.equal(JSON.parse(options.body).bracket[0].name,'FINAL');assert.equal(button.disabled,true);
+   return {ok,json:async()=>ok?{success:true}:{error:'Data storage unavailable.',requestId:'snapshot-trace'}};
+  }});
+  vm.runInContext(code,ctx);ctx.button=button;await vm.runInContext("createWorkflowSnapshot('Bracket QA',button)",ctx);
+  assert.equal(button.disabled,false);assert.equal(opened,ok?1:0);if(ok)assert.equal(button.textContent,'✓ SNAPSHOT SALVAT');else assert.match(alerts[0],/snapshot-trace/);
+ }
+});
